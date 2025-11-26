@@ -16,13 +16,14 @@
           v-model="selectedType"
           placeholder="选择产品类型"
           style="width: 200px; margin-right: 10px"
+          clearable
           @change="handleTypeChange"
         >
           <el-option
             v-for="type in productTypes"
-            :key="type"
-            :label="type"
-            :value="type"
+            :key="type.value"
+            :label="type.label"
+            :value="type.value"
           />
         </el-select>
         
@@ -56,7 +57,11 @@
         <el-table-column prop="cnName" label="产品名称" min-width="200" />
         <el-table-column prop="productSpec" label="产品规格" min-width="200" />
         <el-table-column prop="price" label="价格" width="120" />
-        <el-table-column prop="type" label="产品类型" width="150" />
+        <el-table-column prop="type" label="产品类型" width="150">
+          <template #default="{ row }">
+            {{ getTypeLabel(row.type) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="180">
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
@@ -115,9 +120,9 @@ const loading = ref(false)
 const formVisible = ref(false)
 const currentProduct = ref(null)
 const searchName = ref('')
-const selectedType = ref('产品管理')
+const selectedType = ref('')
 
-const productTypes = ['产品管理', '电子产品', '服装', '食品', '其他']
+const productTypes = computed(() => productStore.productTypes)
 
 // 使用 ref 来管理分页，从 store 同步初始值
 const pagination = ref({
@@ -139,11 +144,31 @@ const formatDate = (dateString) => {
   return date.toLocaleString('zh-CN')
 }
 
+// 根据类型 value 获取对应的 label
+const getTypeLabel = (typeValue) => {
+  if (!typeValue) return '-'
+  const type = productTypes.value.find(t => t.value === typeValue)
+  return type ? type.label : typeValue
+}
+
+// 获取产品类型列表
+const fetchProductTypes = async () => {
+  try {
+    await productStore.fetchProductTypes()
+    // 设置默认选中第一个类型
+    if (productStore.productTypes.length > 0 && !selectedType.value) {
+      selectedType.value = productStore.productTypes[0].value
+    }
+  } catch (error) {
+    ElMessage.error('获取产品类型列表失败')
+  }
+}
+
 // 获取产品列表
 const fetchProducts = async () => {
   loading.value = true
   try {
-    await productStore.fetchProducts(selectedType.value, {
+    await productStore.fetchProducts(selectedType.value || undefined, {
       page: pagination.value.page,
       pagesize: pagination.value.pagesize,
       cnName: searchName.value || undefined
@@ -194,8 +219,19 @@ const handleAdd = () => {
 }
 
 // 编辑产品
-const handleEdit = (row) => {
-  currentProduct.value = { ...row }
+const handleEdit = async (row) => {
+  // 如果是科研监测试剂，需要获取完整信息（包含 details）
+  if (row.type === 'Research Test Reagent') {
+    try {
+      const product = await productStore.fetchProductById(row.id)
+      currentProduct.value = product || { ...row }
+    } catch (error) {
+      console.error('获取产品详情失败:', error)
+      currentProduct.value = { ...row }
+    }
+  } else {
+    currentProduct.value = { ...row }
+  }
   formVisible.value = true
 }
 
@@ -213,7 +249,7 @@ const handleDelete = async (row) => {
     )
 
     loading.value = true
-    await productStore.removeProduct(row.type, row.id)
+    await productStore.removeProduct(row.id)
     ElMessage.success('删除成功')
   } catch (error) {
     if (error !== 'cancel') {
@@ -229,27 +265,26 @@ const handleFormSubmit = async (formData) => {
   try {
     loading.value = true
     
+    const submitData = {
+      type: formData.type,
+      productNo: formData.productNo,
+      cnName: formData.cnName,
+      productSpec: formData.productSpec,
+      price: formData.price
+    }
+    
+    // 如果是科研监测试剂，添加 details 字段
+    if (formData.type === 'Research Test Reagent' && formData.details) {
+      submitData.details = formData.details
+    }
+    
     if (currentProduct.value) {
       // 编辑
-      await productStore.updateProduct(
-        formData.type,
-        currentProduct.value.id,
-        {
-          productNo: formData.productNo,
-          cnName: formData.cnName,
-          productSpec: formData.productSpec,
-          price: formData.price
-        }
-      )
+      await productStore.updateProduct(currentProduct.value.id, submitData)
       ElMessage.success('更新成功')
     } else {
       // 新增
-      await productStore.createProduct(formData.type, {
-        productNo: formData.productNo,
-        cnName: formData.cnName,
-        productSpec: formData.productSpec,
-        price: formData.price
-      })
+      await productStore.createProduct(submitData)
       ElMessage.success('创建成功')
     }
     
@@ -262,7 +297,8 @@ const handleFormSubmit = async (formData) => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchProductTypes()
   fetchProducts()
 })
 </script>

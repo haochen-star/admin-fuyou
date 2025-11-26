@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import {
+  getProductTypes as getProductTypesApi,
   getProducts as getProductsApi,
   getProductById as getProductByIdApi,
   createProduct as createProductApi,
@@ -10,16 +11,30 @@ import {
 export const useProductStore = defineStore('product', {
   state: () => ({
     products: [],
+    productTypes: [],
     pagination: {
       total: 0,
       page: 1,
       pagesize: 10,
       totalPages: 0
     },
-    currentType: '产品管理'
+    currentType: ''
   }),
 
   actions: {
+    async fetchProductTypes() {
+      try {
+        const response = await getProductTypesApi()
+        if (response.success && response.data) {
+          this.productTypes = response.data.types || []
+        }
+        return response
+      } catch (error) {
+        console.error('获取产品类型列表失败:', error)
+        throw error
+      }
+    },
+
     async fetchProducts(type, params = {}) {
       try {
         const response = await getProductsApi(type, params)
@@ -30,7 +45,9 @@ export const useProductStore = defineStore('product', {
             ...this.pagination,
             ...response.data.pagination
           }
-          this.currentType = type
+          if (type) {
+            this.currentType = type
+          }
         }
       } catch (error) {
         console.error('获取产品列表失败:', error)
@@ -38,9 +55,9 @@ export const useProductStore = defineStore('product', {
       }
     },
 
-    async fetchProductById(type, id) {
+    async fetchProductById(id) {
       try {
-        const response = await getProductByIdApi(type, id)
+        const response = await getProductByIdApi(id)
         return response.success ? response.data.product : null
       } catch (error) {
         console.error('获取产品详情失败:', error)
@@ -48,12 +65,12 @@ export const useProductStore = defineStore('product', {
       }
     },
 
-    async createProduct(type, data) {
+    async createProduct(data) {
       try {
-        const response = await createProductApi(type, data)
+        const response = await createProductApi(data)
         if (response.success) {
           // 重新获取列表
-          await this.fetchProducts(type, {
+          await this.fetchProducts(data.type, {
             page: this.pagination.page,
             pagesize: this.pagination.pagesize
           })
@@ -65,12 +82,12 @@ export const useProductStore = defineStore('product', {
       }
     },
 
-    async updateProduct(type, id, data) {
+    async updateProduct(id, data) {
       try {
-        const response = await updateProductApi(type, id, data)
+        const response = await updateProductApi(id, data)
         if (response.success) {
           // 重新获取列表
-          await this.fetchProducts(type, {
+          await this.fetchProducts(data.type || this.currentType, {
             page: this.pagination.page,
             pagesize: this.pagination.pagesize
           })
@@ -82,12 +99,12 @@ export const useProductStore = defineStore('product', {
       }
     },
 
-    async removeProduct(type, id) {
+    async removeProduct(id) {
       try {
-        const response = await deleteProductApi(type, id)
+        const response = await deleteProductApi(id)
         if (response.success) {
           // 重新获取列表
-          await this.fetchProducts(type, {
+          await this.fetchProducts(this.currentType, {
             page: this.pagination.page,
             pagesize: this.pagination.pagesize
           })
