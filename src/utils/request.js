@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import router from '@/router'
 
 const request = axios.create({
-  baseURL: 'http://47.114.96.127:3000',
+  baseURL: '',
   timeout: 10000
 })
 
