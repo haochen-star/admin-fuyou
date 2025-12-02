@@ -4,10 +4,16 @@
       <template #header>
         <div class="card-header">
           <span>产品管理</span>
-          <el-button type="primary" @click="handleAdd">
-            <el-icon><Plus /></el-icon>
-            新增产品
-          </el-button>
+          <div class="header-actions">
+            <el-button type="success" @click="handleBatchUpload">
+              <el-icon><Upload /></el-icon>
+              批量上传
+            </el-button>
+            <el-button type="primary" @click="handleAdd">
+              <el-icon><Plus /></el-icon>
+              新增产品
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -106,18 +112,26 @@
       :product-types="productTypes"
       @submit="handleFormSubmit"
     />
+
+    <ProductBatchUpload
+      v-model="batchUploadVisible"
+      :product-types="productTypes"
+      @success="handleBatchUploadSuccess"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { Plus, Search, Upload } from '@element-plus/icons-vue'
 import { useProductStore } from '@/stores/product'
 import ProductForm from '@/components/ProductForm.vue'
+import ProductBatchUpload from '@/components/ProductBatchUpload.vue'
 
 const productStore = useProductStore()
 const loading = ref(false)
 const formVisible = ref(false)
+const batchUploadVisible = ref(false)
 const currentProduct = ref(null)
 const searchName = ref('')
 const selectedType = ref('')
@@ -218,6 +232,16 @@ const handleAdd = () => {
   formVisible.value = true
 }
 
+// 批量上传
+const handleBatchUpload = () => {
+  batchUploadVisible.value = true
+}
+
+// 批量上传成功
+const handleBatchUploadSuccess = () => {
+  fetchProducts()
+}
+
 // 编辑产品
 const handleEdit = async (row) => {
   // 如果是科研监测试剂，需要获取完整信息（包含 details）
@@ -312,6 +336,11 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .search-bar {

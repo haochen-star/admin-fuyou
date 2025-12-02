@@ -83,3 +83,17 @@ export const deleteProduct = (id) => {
   })
 }
 
+/**
+ * 批量创建产品
+ * @param {Array} products - 产品数组
+ */
+export const batchCreateProducts = (products) => {
+  return request({
+    url: '/api/product/batch/create',
+    method: 'post',
+    data: {
+      products
+    }
+  })
+}
+

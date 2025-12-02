@@ -5,7 +5,8 @@ import {
   getProductById as getProductByIdApi,
   createProduct as createProductApi,
   updateProduct as updateProductApi,
-  deleteProduct as deleteProductApi
+  deleteProduct as deleteProductApi,
+  batchCreateProducts as batchCreateProductsApi
 } from '@/api/product'
 
 export const useProductStore = defineStore('product', {
@@ -112,6 +113,23 @@ export const useProductStore = defineStore('product', {
         return response
       } catch (error) {
         console.error('删除产品失败:', error)
+        throw error
+      }
+    },
+
+    async batchCreateProducts(products) {
+      try {
+        const response = await batchCreateProductsApi(products)
+        if (response.success) {
+          // 重新获取列表
+          await this.fetchProducts(this.currentType, {
+            page: this.pagination.page,
+            pagesize: this.pagination.pagesize
+          })
+        }
+        return response
+      } catch (error) {
+        console.error('批量创建产品失败:', error)
         throw error
       }
     }
