@@ -11,15 +11,15 @@ export function identifyProductType(fileName) {
   const lowerFileName = fileName.toLowerCase()
   
   if (lowerFileName.includes('elisa试剂盒') || lowerFileName.includes('elisa')) {
-    return 'ELISA Kit'
+    return 'elisa_kit'
   }
   
   if (lowerFileName.includes('酪酰胺多色荧光染色试剂盒') || lowerFileName.includes('tyramide')) {
-    return 'Tyramide TSA Kit'
+    return 'tyramide_tsa_kit'
   }
   
   if (lowerFileName.includes('科研检测试剂') || lowerFileName.includes('research')) {
-    return 'Research Test Reagent'
+    return 'research_test_reagent'
   }
   
   return null
@@ -274,10 +274,10 @@ export async function parseExcelFile(file, productType = null) {
         
         // 根据类型解析数据
         let result
-        if (identifiedType === 'Research Test Reagent') {
+        if (identifiedType === 'research_test_reagent') {
           result = parseResearchTestReagentData(jsonData)
         } else {
-          // ELISA Kit 或 Tyramide TSA Kit
+          // elisa_kit 或 tyramide_tsa_kit
           result = parseSimpleProductData(jsonData)
         }
         

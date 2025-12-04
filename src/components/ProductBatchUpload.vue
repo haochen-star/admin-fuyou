@@ -119,7 +119,7 @@
           <el-table-column type="index" label="序号" width="60" />
           
           <!-- ELISA Kit / Tyramide TSA Kit 列 -->
-          <template v-if="previewData.productType !== 'Research Test Reagent'">
+          <template v-if="previewData.productType !== 'research_test_reagent'">
             <el-table-column prop="productNo" label="货号" min-width="150" />
             <el-table-column prop="cnName" label="产品名称" min-width="200" />
             <el-table-column prop="productSpec" label="规格" min-width="120" />

@@ -108,7 +108,7 @@ function processChunk(chunk, productType, startRowNum) {
     const rowNum = startRowNum + index
     const errorsForRow = []
     
-    if (productType === 'Research Test Reagent') {
+    if (productType === 'research_test_reagent') {
       const productNo = row['产品货号'] || ''
       if (!productNo || productNo.toString().trim() === '') {
         errorsForRow.push('产品货号不能为空')

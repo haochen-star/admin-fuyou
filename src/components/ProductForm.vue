@@ -439,7 +439,7 @@ watch(() => props.product, (newProduct) => {
     formData.price = newProduct.price || ''
     
     // 如果是科研监测试剂且有 details 字段，填充详细信息
-    if (newProduct.type === 'Research Test Reagent' && newProduct.details) {
+    if (newProduct.type === 'research_test_reagent' && newProduct.details) {
       formData.details = { ...initDetails(), ...newProduct.details }
     } else {
       formData.details = initDetails()
@@ -461,7 +461,7 @@ watch(visible, (val) => {
     formData.price = props.product.price || ''
     
     // 如果是科研监测试剂且有 details 字段，填充详细信息
-    if (props.product.type === 'Research Test Reagent' && props.product.details) {
+    if (props.product.type === 'research_test_reagent' && props.product.details) {
       formData.details = { ...initDetails(), ...props.product.details }
     } else {
       formData.details = initDetails()
