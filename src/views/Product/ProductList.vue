@@ -245,7 +245,7 @@ const handleBatchUploadSuccess = () => {
 // 编辑产品
 const handleEdit = async (row) => {
   // 如果是科研监测试剂，需要获取完整信息（包含 details）
-  if (row.type === 'Research Test Reagent') {
+  if (row.type === 'research_test_reagent') {
     try {
       const product = await productStore.fetchProductById(row.id)
       currentProduct.value = product || { ...row }
@@ -298,7 +298,7 @@ const handleFormSubmit = async (formData) => {
     }
     
     // 如果是科研监测试剂，添加 details 字段
-    if (formData.type === 'Research Test Reagent' && formData.details) {
+    if (formData.type === 'research_test_reagent' && formData.details) {
       submitData.details = formData.details
     }
     

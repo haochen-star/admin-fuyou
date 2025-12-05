@@ -30,11 +30,11 @@ self.onmessage = function(e) {
     if (!identifiedType) {
       const lowerFileName = fileName.toLowerCase()
       if (lowerFileName.includes('elisa试剂盒') || lowerFileName.includes('elisa')) {
-        identifiedType = 'ELISA Kit'
+        identifiedType = 'elisa_kit'
       } else if (lowerFileName.includes('酪酰胺多色荧光染色试剂盒') || lowerFileName.includes('tyramide')) {
-        identifiedType = 'Tyramide TSA Kit'
+        identifiedType = 'tyramide_tsa_kit'
       } else if (lowerFileName.includes('科研检测试剂') || lowerFileName.includes('research')) {
-        identifiedType = 'Research Test Reagent'
+        identifiedType = 'research_test_reagent'
       }
     }
     

@@ -395,7 +395,7 @@ const formData = reactive({
   details: initDetails()
 })
 
-const isResearchTestReagent = computed(() => formData.type === 'Research Test Reagent')
+const isResearchTestReagent = computed(() => formData.type === 'research_test_reagent')
 
 // 同步 cnName 和 details.productName
 watch(() => formData.cnName, (newVal) => {
@@ -485,7 +485,7 @@ const handleSubmit = async () => {
         const submitData = { ...formData }
         
         // 如果是科研监测试剂，确保包含 details 字段
-        if (formData.type === 'Research Test Reagent') {
+        if (formData.type === 'research_test_reagent') {
           submitData.details = { ...formData.details }
         } else {
           // 非科研监测试剂，不提交 details

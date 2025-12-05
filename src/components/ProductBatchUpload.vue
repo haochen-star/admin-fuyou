@@ -51,6 +51,29 @@
           </el-progress>
         </div>
       </div>
+      
+      <!-- 上传进度条 -->
+      <div v-if="uploading && uploadProgress.total > 0" class="parse-progress-wrapper">
+        <div class="parse-progress">
+          <div class="progress-header">
+            <el-icon class="is-loading"><Loading /></el-icon>
+            <span class="progress-title">正在上传产品数据</span>
+          </div>
+          <el-progress 
+            :percentage="uploadProgress.percentage" 
+            :status="uploadProgress.percentage === 100 ? 'success' : 'active'"
+            :stroke-width="24"
+            class="progress-bar"
+          >
+            <template #default="{ percentage }">
+              <span class="progress-text">
+                批次: {{ uploadProgress.currentBatch }} / {{ uploadProgress.totalBatches }} | 
+                已上传: {{ uploadProgress.uploaded }} / {{ uploadProgress.total }} 条 ({{ percentage }}%)
+              </span>
+            </template>
+          </el-progress>
+        </div>
+      </div>
 
       <!-- 产品类型选择（如果无法自动识别） -->
       <div v-if="needTypeSelection" class="type-selection" v-loading="parsing" element-loading-text="正在解析 Excel 文件，请稍候...">
@@ -196,7 +219,7 @@
           :disabled="!canUpload || parsing"
           @click="handleUpload"
         >
-          {{ uploading ? '上传中...' : parsing ? '解析中...' : '确认上传' }}
+          {{ uploading ? `上传中... (${uploadProgress.uploaded}/${uploadProgress.total})` : parsing ? '解析中...' : '确认上传' }}
         </el-button>
       </span>
     </template>
@@ -232,6 +255,7 @@ const selectedType = ref('')
 const uploading = ref(false)
 const parsing = ref(false)
 const parseProgress = ref({ processed: 0, total: 0, percentage: 0 })
+const uploadProgress = ref({ uploaded: 0, total: 0, percentage: 0, currentBatch: 0, totalBatches: 0 })
 
 const visible = computed({
   get: () => props.modelValue,
@@ -396,20 +420,62 @@ const handleReParse = async () => {
   }
 }
 
-// 处理上传
+// 处理上传（支持分片上传）
 const handleUpload = async () => {
   if (!canUpload.value) return
   
   uploading.value = true
+  const validProducts = previewData.value.products
+  const totalProducts = validProducts.length
+  
+  // 每批上传的产品数量（根据实际情况调整，建议 300-500 条）
+  const batchSize = 500
+  const totalBatches = Math.ceil(totalProducts / batchSize)
+  
+  uploadProgress.value = {
+    uploaded: 0,
+    total: totalProducts,
+    percentage: 0,
+    currentBatch: 0,
+    totalBatches
+  }
   
   try {
-    // 上传全部有效的数据（不是预览数据，而是完整的 products 数组）
-    // 即使预览只显示前1000条，上传时也会上传全部数据
-    const validProducts = previewData.value.products
+    let successCount = 0
+    let errorCount = 0
+    const errors = []
     
-    await productStore.batchCreateProducts(validProducts)
+    // 分批次上传
+    for (let i = 0; i < totalBatches; i++) {
+      const start = i * batchSize
+      const end = Math.min(start + batchSize, totalProducts)
+      const batch = validProducts.slice(start, end)
+      
+      uploadProgress.value.currentBatch = i + 1
+      
+      try {
+        await productStore.batchCreateProducts(batch)
+        successCount += batch.length
+        uploadProgress.value.uploaded = successCount
+        uploadProgress.value.percentage = Math.round((successCount / totalProducts) * 100)
+      } catch (error) {
+        errorCount += batch.length
+        errors.push({
+          batch: i + 1,
+          products: batch.length,
+          error: error.message || '上传失败'
+        })
+        console.error(`第 ${i + 1} 批上传失败:`, error)
+      }
+    }
     
-    ElMessage.success(`成功上传 ${validProducts.length} 个产品`)
+    // 显示结果
+    if (errorCount === 0) {
+      ElMessage.success(`成功上传 ${successCount} 个产品`)
+    } else {
+      ElMessage.warning(`上传完成：成功 ${successCount} 个，失败 ${errorCount} 个`)
+      console.error('上传错误详情:', errors)
+    }
     
     emit('success')
     handleClose()
@@ -418,6 +484,7 @@ const handleUpload = async () => {
     console.error('批量上传产品失败:', error)
   } finally {
     uploading.value = false
+    uploadProgress.value = { uploaded: 0, total: 0, percentage: 0, currentBatch: 0, totalBatches: 0 }
   }
 }
 
@@ -432,6 +499,7 @@ const handleClose = () => {
   uploading.value = false
   parsing.value = false
   parseProgress.value = { processed: 0, total: 0, percentage: 0 }
+  uploadProgress.value = { uploaded: 0, total: 0, percentage: 0, currentBatch: 0, totalBatches: 0 }
   if (uploadRef.value) {
     uploadRef.value.clearFiles()
   }
