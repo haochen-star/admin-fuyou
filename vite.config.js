@@ -24,7 +24,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://47.114.96.127:3000',
+        target: 'http://localhost:3000', // 本地开发时，后端运行在 3000 端口
+        // target: 'http://47.114.96.127:3000',  // 如果后端在远程服务器，取消注释这行并注释上面那行
         changeOrigin: true
       }
     }
