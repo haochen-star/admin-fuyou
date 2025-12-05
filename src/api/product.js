@@ -97,3 +97,15 @@ export const batchCreateProducts = (products) => {
   })
 }
 
+/**
+ * 批量删除产品
+ * @param {Array} ids - 产品ID数组
+ */
+export const batchDeleteProducts = (ids) => {
+  return request({
+    url: '/api/product/batch/delete',
+    method: 'delete',
+    data: { ids }
+  })
+}
+

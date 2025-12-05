@@ -5,6 +5,14 @@
         <div class="card-header">
           <span>产品管理</span>
           <div class="header-actions">
+            <el-button 
+              type="danger" 
+              :disabled="selectedCount === 0"
+              @click="handleBatchDelete"
+            >
+              <el-icon><Delete /></el-icon>
+              批量删除{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}
+            </el-button>
             <el-button type="success" @click="handleBatchUpload">
               <el-icon><Upload /></el-icon>
               批量上传
@@ -57,7 +65,10 @@
         :data="productStore.products"
         style="width: 100%; margin-top: 20px"
         border
+        row-key="id"
+        @selection-change="handleSelectionChange"
       >
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="productNo" label="货号" width="150" />
         <el-table-column prop="cnName" label="产品名称" min-width="200" />
@@ -123,7 +134,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { Plus, Search, Upload } from '@element-plus/icons-vue'
+import { Plus, Search, Upload, Delete } from '@element-plus/icons-vue'
 import { useProductStore } from '@/stores/product'
 import ProductForm from '@/components/ProductForm.vue'
 import ProductBatchUpload from '@/components/ProductBatchUpload.vue'
@@ -135,8 +146,12 @@ const batchUploadVisible = ref(false)
 const currentProduct = ref(null)
 const searchName = ref('')
 const selectedType = ref('')
+const selectedProducts = ref([])
 
 const productTypes = computed(() => productStore.productTypes)
+
+// 计算已选中的数量
+const selectedCount = computed(() => selectedProducts.value.length)
 
 // 使用 ref 来管理分页，从 store 同步初始值
 const pagination = ref({
@@ -259,6 +274,43 @@ const handleEdit = async (row) => {
   formVisible.value = true
 }
 
+// 处理选中变化
+const handleSelectionChange = (selection) => {
+  selectedProducts.value = selection
+}
+
+// 批量删除产品
+const handleBatchDelete = async () => {
+  if (selectedProducts.value.length === 0) {
+    ElMessage.warning('请先选择要删除的产品')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedCount.value} 个产品吗？`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    loading.value = true
+    const ids = selectedProducts.value.map(product => product.id)
+    await productStore.batchDeleteProducts(ids)
+    ElMessage.success(`成功删除 ${selectedCount.value} 个产品`)
+    selectedProducts.value = []
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || '批量删除失败')
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
 // 删除产品
 const handleDelete = async (row) => {
   try {
@@ -275,6 +327,8 @@ const handleDelete = async (row) => {
     loading.value = true
     await productStore.removeProduct(row.id)
     ElMessage.success('删除成功')
+    // 如果删除的产品在选中列表中，从选中列表中移除
+    selectedProducts.value = selectedProducts.value.filter(p => p.id !== row.id)
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error(error.message || '删除失败')
