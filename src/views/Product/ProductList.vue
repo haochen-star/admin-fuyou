@@ -299,8 +299,15 @@ const handleBatchDelete = async () => {
 
     loading.value = true
     const ids = selectedProducts.value.map(product => product.id)
-    await productStore.batchDeleteProducts(ids)
-    ElMessage.success(`成功删除 ${selectedCount.value} 个产品`)
+    const response = await productStore.batchDeleteProducts(ids)
+    // 使用接口返回的 message（包含实际删除数量）
+    if (response && response.message) {
+      ElMessage.success(response.message)
+    } else if (response && response.data && response.data.deletedCount !== undefined) {
+      ElMessage.success(`成功删除 ${response.data.deletedCount} 个产品`)
+    } else {
+      ElMessage.success(`成功删除 ${selectedCount.value} 个产品`)
+    }
     selectedProducts.value = []
   } catch (error) {
     if (error !== 'cancel') {

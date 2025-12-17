@@ -150,7 +150,8 @@ function processChunk(chunk, productType, startRowNum) {
           stockStatus: (row['期货'] || '').toString().trim(),
           purification: (row['纯化'] || '').toString().trim(),
           tags: (row['标记'] || '').toString().trim(),
-          img: (row['img'] || row['图片地址'] || '').toString().trim(),
+          img: (row['多图'] || row['img'] || row['图片地址'] || '').toString().trim(),
+          imgDesc: (row['多图描述'] || '').toString().trim(),
           background: (row['背景介绍'] || '').toString().trim(),
           tissueExpression: (row['组织表达'] || '').toString().trim()
         }

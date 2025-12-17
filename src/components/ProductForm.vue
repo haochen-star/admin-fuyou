@@ -281,10 +281,19 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="图片地址">
-              <el-input v-model="formData.details.img" placeholder="请输入图片地址" />
+              <el-input v-model="formData.details.img" placeholder="请输入图片地址（支持多图，用逗号分隔）" />
             </el-form-item>
           </el-col>
         </el-row>
+
+        <el-form-item label="多图描述">
+          <el-input
+            v-model="formData.details.imgDesc"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入多图描述"
+          />
+        </el-form-item>
 
         <el-form-item label="背景介绍">
           <el-input
@@ -382,6 +391,7 @@ const initDetails = () => ({
   purification: '',
   tags: '',
   img: '',
+  imgDesc: '',
   background: '',
   tissueExpression: ''
 })
